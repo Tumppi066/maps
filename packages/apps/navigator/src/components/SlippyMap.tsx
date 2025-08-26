@@ -32,12 +32,12 @@ export const SlippyMap = (props: {
     TrailerOrWaypointMarkers,
     PlayerMarker,
     center = [0, 0],
-    mode = 'light',
+    mode = 'dark',
   } = props;
   // HACK hardcode tileRootUrl so that it uses the `navigator`'s webserver root,
   // because it's still under development and no public-facing hosted version
   // exists yet.
-  const tileRootUrl = '';
+  const tileRootUrl = 'https://data.ets2la.com';
   const mapRef = useRef<MapRef>(null);
   const playerMarkerRef = useRef<MapLibreGLMarker>(null);
   return (
@@ -88,11 +88,20 @@ export const SlippyMap = (props: {
         }
       >
         <Layer
+          id={'activeRouteLayerBottom'}
+          type={'line'}
+          paint={{
+            'line-color': '#055',
+            'line-width': 16,
+            'line-opacity': 0.8,
+          }}
+        />
+        <Layer
           id={'activeRouteLayer'}
           type={'line'}
           paint={{
-            'line-color': '#f00',
-            'line-width': 5,
+            'line-color': '#09f',
+            'line-width': 10,
             'line-opacity': 1,
           }}
         />
@@ -128,8 +137,9 @@ export const SlippyMap = (props: {
         style={{
           marginLeft: 54,
           opacity: 0.5,
+          color: mode === 'dark' ? 'white' : 'black',
         }}
-        customAttribution="&copy; Trucker Mudgeon. scenery town data by <a href='https://github.com/nautofon/ats-towns'>nautofon</a> and <a href='https://forum.scssoft.com/viewtopic.php?p=1946956#p1946956'>krmarci</a>."
+        customAttribution="&copy; Trucker Mudgeon & Tumppi066. <br>Scenery town data by <a href='https://github.com/nautofon/ats-towns'>nautofon</a> and <a href='https://forum.scssoft.com/viewtopic.php?p=1946956#p1946956'>krmarci</a>."
       />
     </MapGl>
   );

@@ -33,7 +33,7 @@ export const PlayerMarker = forwardRef<
   MapLibreGLMarker,
   PlayerMarkerProps & PropsForTestingOnly
 >((props: PlayerMarkerProps & PropsForTestingOnly, ref) => {
-  const { mode = 'light' } = props;
+  const { mode = 'dark' } = props;
   const { background, fill } = colors[mode];
   return (
     <Marker
@@ -57,7 +57,7 @@ export const PlayerMarker = forwardRef<
       >
         <Navigation
           sx={{
-            transform: 'scale(4)',
+            transform: 'scale(2)',
             fill,
           }}
         />
