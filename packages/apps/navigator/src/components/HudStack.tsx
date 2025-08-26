@@ -28,8 +28,8 @@ export const HudStack = (props: {
       </Stack>
       <Stack gap={2} alignSelf={'end'} alignItems={'center'}>
         <props.RecenterFab />
-        <props.RouteFab />
-        <props.SearchFab />
+        {/* <props.RouteFab /> */}
+        {/* <props.SearchFab /> */}
       </Stack>
     </Stack>
   );

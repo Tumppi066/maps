@@ -198,7 +198,7 @@ const App = (props: {
   return (
     <>
       <SlippyMap />
-      {/* <Controls /> */}
+      <Controls />
       <NavSheetContainer store={props.store}>
         <NavSheet />
       </NavSheetContainer>
