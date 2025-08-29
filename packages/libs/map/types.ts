@@ -616,6 +616,8 @@ export type PoiFeature = GeoJSON.Feature<GeoJSON.Point, PoiProperties>;
 
 export type TrafficFeature = GeoJSON.Feature<GeoJSON.Point, TrafficProperties>;
 
+export type ExitFeature = GeoJSON.Feature<GeoJSON.Point, ExitProperties>;
+
 export type FootprintFeature = GeoJSON.Feature<
   GeoJSON.Polygon,
   FootprintProperties
@@ -640,6 +642,7 @@ export type AtsMapGeoJsonFeature =
   | CountryFeature
   | PoiFeature
   | TrafficFeature
+  | ExitFeature
   | FootprintFeature
   | ContourFeature
   | AchievementFeature
@@ -724,6 +727,11 @@ export interface TrafficProperties {
   dlcGuard: number;
 }
 
+export interface ExitProperties {
+  type: 'exit';
+  name: string;
+}
+
 export type ScopedCityFeature = GeoJSON.Feature<
   GeoJSON.Point,
   { type: 'city'; map: 'usa' | 'europe'; countryCode: string; name: string }
@@ -787,6 +795,18 @@ export type Neighbors = Readonly<{
   /** Neighbors that can be reached whilst traveling in the backward direction. */
   backward: readonly Neighbor[];
 }>;
+
+export interface ServiceArea {
+  facilities: Set<FacilityIcon>;
+  itemUid: bigint;
+  itemType: ItemType.Prefab | ItemType.MapArea;
+}
+
+export interface GraphData {
+  graph: Map<bigint, Neighbors>;
+  // key is node uid (also appears as a key within `graph` map)
+  serviceAreas: Map<bigint, ServiceArea>;
+}
 
 // Routing Demo
 // Hacky, minimal versions of types needed for the fully-clientside "routes" demo page.
