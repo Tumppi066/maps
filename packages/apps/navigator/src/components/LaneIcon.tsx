@@ -16,6 +16,11 @@ export const LaneIcon = (props: LaneIconProps) => {
     highlightColor = '#000',
     dimColor = '#ccc',
   } = props;
+
+  if (typeof branches === 'undefined' || branches.length === 0) {
+    return null;
+  }
+
   const branchArr = [...branches].sort((a, b) =>
     // sort `branches` so that `activeBranch` is last.
     a === activeBranch ? 1 : b === activeBranch ? -1 : 0,

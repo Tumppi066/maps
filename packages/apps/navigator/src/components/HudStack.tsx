@@ -18,7 +18,7 @@ export const HudStack = (props: {
         sx={{ pointerEvents: 'auto' }}
       >
         <props.Direction />
-        <props.SpeedLimit />
+        {/*<props.SpeedLimit /> */}
       </Stack>
       <Stack
         gap={2}

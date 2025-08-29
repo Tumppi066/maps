@@ -3,7 +3,6 @@ import { Collapse, Slide } from '@mui/material';
 import { useMeasure } from '@uidotdev/usehooks';
 import type { ReactElement } from 'react';
 import { useCallback, useState } from 'react';
-import { RouteControls } from './RouteControls';
 
 export const RouteStack = (props: {
   Guidance: () => ReactElement;
@@ -43,6 +42,7 @@ export const RouteStack = (props: {
             </Box>
           </Slide>
         </Box>
+        {/*
         <Box
           //ref={routeControlsRef}
           sx={{
@@ -57,6 +57,7 @@ export const RouteStack = (props: {
             onRouteEndClick={handleRouteEndClick}
           />
         </Box>
+        */}
       </Stack>
     </Box>
   );

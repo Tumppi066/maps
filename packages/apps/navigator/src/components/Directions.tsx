@@ -6,6 +6,7 @@ import { LaneIcon } from './LaneIcon';
 const bgColor = Color('hsl(151,82%,35%)');
 
 export const Directions = (props: RouteDirection) => {
+  console.log('render Directions', props);
   const hasHint = !!props.laneHint || !!props.thenHint;
   const { length, unit } = toLengthAndUnit(props.distanceMeters);
   return (
