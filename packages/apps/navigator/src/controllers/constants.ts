@@ -1,5 +1,6 @@
 export const enum CameraMode {
   FOLLOW,
+  ROUTE,
   FREE,
 }
 

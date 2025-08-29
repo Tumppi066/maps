@@ -106,10 +106,6 @@ export class AppControllerImpl implements AppController {
     }
     // Find bounding box in rotated space
     const rotatedBounds = getExtent(rotatedPoints);
-    // Unrotate the bounding box corners back to original space
-    const unrotatePoint = (point: [number, number]) => {
-      return rotatePoint(point, -bearingRadians, [0, 0]);
-    };
     const bounds = [
       [rotatedBounds[0], rotatedBounds[1]],
       [rotatedBounds[2], rotatedBounds[3]],
@@ -203,11 +199,6 @@ export class AppControllerImpl implements AppController {
 
         const cameraBearing = bearing;
 
-        // HACK: There should be a better way to do this somewhere,
-        // I just haven't found it yet.
-        // - Tumppi066
-
-        // Rotate the camera to point along the route.
         const active_route = store.activeRoute;
         const closest = active_route
           ? active_route.segments
@@ -225,67 +216,89 @@ export class AppControllerImpl implements AppController {
             )
           : undefined;
 
-        let routeCamera = false;
+        let idx = undefined;
         if (closest && closestDistance && closestDistance < 0.1) {
           // ~10km
-          const idx = active_route?.segments
+          idx = active_route?.segments
             .flatMap(s => s.lonLats)
             .findIndex(ll => ll[0] === closest[0] && ll[1] === closest[1]);
 
-          if (idx) {
-            const lookAhead = Math.round(speedMph * 0.4 + 4);
-            const nextSegments = active_route?.segments
-              .flatMap(s => s.lonLats)
-              .slice(idx, idx + lookAhead);
-            if (nextSegments && nextSegments.length >= 2) {
-              routeCamera = true;
-              const { pitch: newPitch } = toCameraOptions(
-                center,
-                cameraBearing,
-                speedMph,
-              );
-
-              nextSegments.push(currPosition);
-              const bounds = this.findRotatedBoundingBox(
-                nextSegments,
-                cameraBearing,
-              );
-              //console.log("bounds", bounds[0][0], bounds[0][1], bounds[1][0], bounds[1][1]);
-              map.fitBounds(bounds, {
-                duration: 500,
-                linear: true,
-                pitch: newPitch,
-                bearing: cameraBearing,
-                padding: {
-                  bottom: 100,
-                  left: store.showNavSheet ? 440 : 50,
-                  right: 50,
-                },
-                maxZoom: 13,
-                minZoom: 10,
-                easing: t => {
-                  // HACK update marker here
-                  markerPosition[0] =
-                    prevPosition[0] + t * (currPosition[0] - prevPosition[0]);
-                  markerPosition[1] =
-                    prevPosition[1] + t * (currPosition[1] - prevPosition[1]);
-                  markerBearing =
-                    prevBearing + t * calculateDelta(prevBearing, currBearing);
-
-                  playerMarker.setLngLat(markerPosition);
-                  playerMarker.setRotation(markerBearing);
-                  return t;
-                },
-              });
-            }
+          if (idx && store.cameraMode === CameraMode.FOLLOW) {
+            // Switch to route from follow if we're on a route
+            store.cameraMode = CameraMode.ROUTE;
+          } else if (!idx && store.cameraMode === CameraMode.ROUTE) {
+            // Fallback to follow if route is not found
+            store.cameraMode = CameraMode.FOLLOW;
           }
         }
 
-        if (routeCamera) {
-          return;
-        }
-
         switch (store.cameraMode) {
+          case CameraMode.FREE:
+            playerMarker.setLngLat(center);
+            playerMarker.setRotation(bearing);
+            break;
+          case CameraMode.ROUTE: {
+            // HACK: There should be a better way to do this somewhere,
+            // I just haven't found it yet.
+            // - Tumppi066
+
+            // Rotate the camera to point along the route.
+            let routeCamera = false;
+            if (idx) {
+              const lookAhead = Math.round(speedMph * 0.4 + 4);
+              const nextSegments = active_route?.segments
+                .flatMap(s => s.lonLats)
+                .slice(idx, idx + lookAhead);
+
+              if (nextSegments && nextSegments.length >= 2) {
+                routeCamera = true;
+                const { pitch: newPitch } = toCameraOptions(
+                  center,
+                  cameraBearing,
+                  speedMph,
+                );
+
+                nextSegments.push(currPosition);
+                const bounds = this.findRotatedBoundingBox(
+                  nextSegments,
+                  cameraBearing,
+                );
+
+                map.fitBounds(bounds, {
+                  duration: 500,
+                  linear: true,
+                  pitch: newPitch,
+                  bearing: cameraBearing,
+                  padding: {
+                    bottom: 100,
+                    left: store.showNavSheet ? 440 : 50,
+                    right: 50,
+                  },
+                  maxZoom: 13,
+                  minZoom: 10,
+                  easing: t => {
+                    // HACK update marker here
+                    markerPosition[0] =
+                      prevPosition[0] + t * (currPosition[0] - prevPosition[0]);
+                    markerPosition[1] =
+                      prevPosition[1] + t * (currPosition[1] - prevPosition[1]);
+                    markerBearing =
+                      prevBearing +
+                      t * calculateDelta(prevBearing, currBearing);
+
+                    playerMarker.setLngLat(markerPosition);
+                    playerMarker.setRotation(markerBearing);
+                    return t;
+                  },
+                });
+              }
+              if (!routeCamera) {
+                // Fallthrough to FOLLOW
+                store.cameraMode = CameraMode.FOLLOW;
+              }
+            }
+            break;
+          }
           case CameraMode.FOLLOW:
             map.easeTo({
               ...toCameraOptions(center, cameraBearing, speedMph),
@@ -305,10 +318,6 @@ export class AppControllerImpl implements AppController {
                 return t;
               },
             });
-            break;
-          case CameraMode.FREE:
-            playerMarker.setLngLat(center);
-            playerMarker.setRotation(bearing);
             break;
           default:
             throw new UnreachableError(store.cameraMode);
