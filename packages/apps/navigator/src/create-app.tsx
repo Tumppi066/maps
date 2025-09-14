@@ -174,14 +174,20 @@ export function createApp({
     ),
   );
 
-  const _RouteStack = () => (
-    <RouteStack
-      Guidance={_Directions}
-      onRouteEndClick={action(() =>
-        controller.setActiveRoute(store, undefined, appClient),
-      )}
-    />
-  );
+  const _RouteStack = observer(() => {
+    return store.activeRoute ? (
+      <RouteStack
+        Guidance={_Directions}
+        onRouteEndClick={action(() =>
+          controller.setActiveRoute(store, undefined, appClient),
+        )}
+        distanceMeters={store.activeRoute.segments[0].distance}
+        minutes={store.activeRoute.segments[0].time / 60}
+      />
+    ) : (
+      <></>
+    );
+  });
 
   return {
     App: () => (

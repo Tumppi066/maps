@@ -7,6 +7,8 @@ import { useCallback, useState } from 'react';
 export const RouteStack = (props: {
   Guidance: () => ReactElement;
   onRouteEndClick: () => void;
+  distanceMeters?: number;
+  minutes?: number;
 }) => {
   const { Guidance, onRouteEndClick } = props;
   const [stackRef, { height: stackHeight }] = useMeasure();
@@ -42,7 +44,6 @@ export const RouteStack = (props: {
             </Box>
           </Slide>
         </Box>
-        {/*
         <Box
           //ref={routeControlsRef}
           sx={{
@@ -50,14 +51,15 @@ export const RouteStack = (props: {
             maxHeight: `calc(${stackHeight}px - 1em)`,
           }}
         >
+          {/* I've made these work, but I didn't like how it felt with ETS2LA so it's disabled for now.
           <RouteControls
-            summary={{ minutes: 95, distanceMeters: 1234 }}
+            summary={{ minutes: props.minutes ? props.minutes : 0, distanceMeters: props.distanceMeters ? props.distanceMeters : 0 }}
             expanded={expanded}
             onDisclosureClick={toggleDisclosure}
             onRouteEndClick={handleRouteEndClick}
           />
+          */}
         </Box>
-        */}
       </Stack>
     </Box>
   );

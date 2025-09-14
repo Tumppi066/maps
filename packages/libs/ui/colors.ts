@@ -49,7 +49,7 @@ export const modeColors = {
   ['dark']: {
     // base
     water: '#36415d',
-    land: '#1a1a1a',
+    land: '#161616',
     stateBorder: '#555',
     countryBorder: '#333',
     // game

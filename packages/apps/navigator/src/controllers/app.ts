@@ -64,63 +64,6 @@ export class AppControllerImpl implements AppController {
     //});
   }
 
-  // https://stackoverflow.com/a/79221173
-  // FitBounds doesn't take into account bearing and pitch,
-  // this method adjusts the bounds to the bearing.
-  findRotatedBoundingBox = (points: [number, number][], bearing: number) => {
-    const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
-    // Rotate a point [lng, lat] around a given origin by an angle in radians
-    const rotatePoint = (
-      [lng, lat]: [number, number],
-      angle: number,
-      origin: [number, number],
-    ) => {
-      const cosTheta = Math.cos(angle);
-      const sinTheta = Math.sin(angle);
-      const translatedLng = lng - origin[0];
-      const translatedLat = lat - origin[1];
-      const xRot = translatedLng * cosTheta - translatedLat * sinTheta;
-      const yRot = translatedLng * sinTheta + translatedLat * cosTheta;
-      return [xRot, yRot] as [number, number];
-    };
-    // Find centroid from an array of points
-    const findCentroid = (points: [number, number][]) => {
-      return points
-        .reduce(
-          ([sumLng, sumLat], [lng, lat]) => [sumLng + lng, sumLat + lat],
-          [0, 0],
-        )
-        .map(sum => sum / points.length) as [number, number];
-    };
-
-    const bearingRadians = toRadians(bearing);
-    const centroid = findCentroid(points);
-    // Rotate all points to the rotated coordinate space using the centroid
-    const rotatedPoints = [];
-    for (const point of points) {
-      if (typeof point !== typeof [0, 0]) continue;
-      if (point.length !== 2) continue;
-      if (typeof point[0] !== 'number' || typeof point[1] !== 'number')
-        continue;
-      rotatedPoints.push(rotatePoint(point, bearingRadians, centroid));
-    }
-    // Find bounding box in rotated space
-    const rotatedBounds = getExtent(rotatedPoints);
-    const bounds = [
-      [rotatedBounds[0], rotatedBounds[1]],
-      [rotatedBounds[2], rotatedBounds[3]],
-    ] as [[number, number], [number, number]];
-    // Add centroid to get the final bounds
-    // This is equivalent to rotating the bounding box around the centroid
-    bounds[0][0] += centroid[0];
-    bounds[0][1] += centroid[1];
-    bounds[1][0] += centroid[0];
-    bounds[1][1] += centroid[1];
-    //const bounds = rotatedBounds.map((v, i) => v + centroid[i % 2]) as unknown as [[number, number], [number, number]];
-
-    return bounds;
-  };
-
   onMapLoad(map: MapRef, player: Marker) {
     Preconditions.checkState(this.map == null);
     Preconditions.checkState(this.playerMarker == null);
@@ -261,11 +204,18 @@ export class AppControllerImpl implements AppController {
             let routeCamera = false;
             if (idx) {
               const lookAhead = Math.round(speedMph * 0.4 + 4);
-              const nextSegments = active_route?.segments
+              let nextSegments = active_route?.segments
                 .flatMap(s => s.lonLats)
                 .slice(idx, idx + lookAhead);
 
               if (nextSegments && nextSegments.length >= 2) {
+                // Filter so they aren't too far away from us
+                nextSegments = nextSegments.filter(
+                  point =>
+                    Math.abs(point[1] - center[1]) <= 0.1 &&
+                    Math.abs(point[0] - center[0]) <= 0.1,
+                );
+
                 routeCamera = true;
                 const { pitch: newPitch } = toCameraOptions(
                   center,
@@ -274,10 +224,11 @@ export class AppControllerImpl implements AppController {
                 );
 
                 nextSegments.push(currPosition);
-                const bounds = this.findRotatedBoundingBox(
-                  nextSegments,
-                  cameraBearing,
-                );
+                const extent = getExtent(nextSegments);
+                const bounds = [
+                  [extent[0], extent[1]],
+                  [extent[2], extent[3]],
+                ] as [[number, number], [number, number]];
 
                 map.fitBounds(bounds, {
                   duration: 500,
@@ -288,6 +239,7 @@ export class AppControllerImpl implements AppController {
                     bottom: 100,
                     left: store.showNavSheet ? 440 : 50,
                     right: 50,
+                    top: 0,
                   },
                   maxZoom: 13,
                   minZoom: 10,
@@ -307,10 +259,10 @@ export class AppControllerImpl implements AppController {
                   },
                 });
               }
-              if (!routeCamera) {
-                // Fallthrough to FOLLOW
-                store.cameraMode = CameraMode.FOLLOW;
-              }
+            }
+            if (!routeCamera) {
+              // Fallthrough to FOLLOW
+              store.cameraMode = CameraMode.FOLLOW;
             }
             break;
           }
@@ -455,16 +407,16 @@ function toCameraOptions(center: Position, bearing: number, speedMph: number) {
   let pitch;
   if (speedMph > 60) {
     zoom = 11;
-    pitch = 25;
+    pitch = 45;
   } else if (speedMph > 40) {
     zoom = 12;
-    pitch = 20;
+    pitch = 25;
   } else if (speedMph > 10) {
     zoom = 12.5;
-    pitch = 15;
+    pitch = 0;
   } else {
     zoom = 14;
-    pitch = 10;
+    pitch = 0;
   }
   return {
     center,

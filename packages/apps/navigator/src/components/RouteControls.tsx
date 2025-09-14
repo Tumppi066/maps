@@ -1,20 +1,10 @@
-import {
-  AltRoute,
-  FormatListBulleted,
-  KeyboardArrowDown,
-  KeyboardArrowUp,
-  Search,
-} from '@mui/icons-material';
+import { KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material';
 import {
   Box,
   Button,
   Card,
   IconButton,
   List,
-  ListDivider,
-  ListItem,
-  ListItemButton,
-  ListItemDecorator,
   Stack,
   Typography,
 } from '@mui/joy';
@@ -31,9 +21,37 @@ interface RouteControlsProps {
   onRouteEndClick: () => void;
 }
 
+const formatMinutes = (minutes: number) => {
+  if (minutes < 60) {
+    return `${minutes}`;
+  } else {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}:${mins.toString().padStart(2, '0')}`;
+  }
+};
+
+const formatDistance = (meters: number) => {
+  if (meters < 1000) {
+    return `${Math.round(meters)}`;
+  } else if (meters < 100000) {
+    return `${(meters / 1000).toFixed(1)}`;
+  } else {
+    return `${Math.round(meters / 1000)}`;
+  }
+};
+
 export const RouteControls = (props: RouteControlsProps) => {
   const DisclosureIcon = props.expanded ? KeyboardArrowDown : KeyboardArrowUp;
   console.log('render RouteControls. expanded?', props.expanded);
+
+  // TODO: Change scale based on current game (ETS2 vs ATS)
+  const scale = 20; // ETS2 Scale is 1:20
+  const realMinutes = Math.round(props.summary.minutes / scale);
+  const gameDistance = Math.round(props.summary.distanceMeters * scale);
+
+  const arrival = new Date();
+  arrival.setMinutes(arrival.getMinutes() + realMinutes);
 
   return (
     <Card
@@ -56,19 +74,20 @@ export const RouteControls = (props: RouteControlsProps) => {
       >
         <Stack alignItems={'center'}>
           <Typography level={'h3'} fontWeight={'bold'}>
-            12:34
+            {arrival.getHours().toString().padStart(2, '0')}:
+            {arrival.getMinutes().toString().padStart(2, '0')}
           </Typography>
           <Typography>arrival</Typography>
         </Stack>
         <Stack alignItems={'center'}>
-          <Typography level={'h3'}>2:34</Typography>
+          <Typography level={'h3'}>{formatMinutes(realMinutes)}</Typography>
           <Typography>
             {props.summary.minutes < 60 ? 'minutes' : 'hours'}
           </Typography>
         </Stack>
         <Stack alignItems={'center'}>
-          <Typography level={'h3'}>12</Typography>
-          <Typography>mi</Typography>
+          <Typography level={'h3'}>{formatDistance(gameDistance)}</Typography>
+          <Typography>{gameDistance < 1000 ? 'm' : 'km'}</Typography>
         </Stack>
         <IconButton
           size={'lg'}
@@ -78,7 +97,7 @@ export const RouteControls = (props: RouteControlsProps) => {
           <DisclosureIcon sx={{ transform: 'scale(1.25)' }} />
         </IconButton>
       </Stack>
-      <Box overflow={'scroll'}>
+      <Box overflow={'none'}>
         <ExpandedControls
           expanded={props.expanded}
           onRouteEndClick={props.onRouteEndClick}
@@ -110,6 +129,8 @@ const ExpandedControls = ({
   return (
     <Collapse in={expanded}>
       <List size={'lg'}>
+        {/*
+
         <ListDivider />
         <ListItem>
           <ListItemButton>
@@ -139,6 +160,7 @@ const ExpandedControls = ({
         </ListItem>
 
         <ListDivider />
+        */}
         <Button
           sx={{ mt: 2 }}
           size={'lg'}
