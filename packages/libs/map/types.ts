@@ -131,7 +131,7 @@ export type NonFacilityPoi =
 export type LabeledPoi = BasePoi &
   Readonly<
     | {
-        type: Exclude<NonFacilityPoi, 'landmark'>;
+        type: Exclude<NonFacilityPoi, 'landmark' | 'company'>;
         label: string;
       }
     | {
@@ -139,6 +139,11 @@ export type LabeledPoi = BasePoi &
         label: string;
         dlcGuard: number;
         nodeUid: bigint;
+      }
+    | {
+        type: 'company';
+        label: string;
+        cityToken: string;
       }
   >;
 
@@ -732,44 +737,29 @@ export interface ExitProperties {
   name: string;
 }
 
-export type ScopedCityFeature = GeoJSON.Feature<
-  GeoJSON.Point,
-  { type: 'city'; map: 'usa' | 'europe'; countryCode: string; name: string }
->;
-
-export type ScopedCountryFeature = GeoJSON.Feature<
-  GeoJSON.Point,
-  { type: 'country'; map: 'usa' | 'europe'; code: string; name: string }
->;
-
-export type CompanyFeature = GeoJSON.Feature<
-  GeoJSON.Point,
-  {
-    map: 'usa' | 'europe';
-    token: string;
-    countryCode: string;
-    cityToken: string;
-    dlcGuard: number;
-  }
->;
-
-export type SearchProperties = {
+interface BaseSearchProperties {
   dlcGuard: number;
   stateName: string;
   stateCode: string;
   label: string;
   tags: string[];
-} & (
-  | {
-      type: 'company' | 'landmark' | 'viewpoint' | 'ferry' | 'train' | 'dealer';
-      containingCity?: string;
-      nearestCity?: string;
-      sprite: string;
-    }
-  | {
-      type: 'city' | 'scenery';
-    }
-);
+}
+
+export type SearchPoiProperties = BaseSearchProperties & {
+  type: 'company' | 'landmark' | 'viewpoint' | 'ferry' | 'train' | 'dealer';
+  city: {
+    name: string;
+    stateCode: string;
+    distance: number;
+  };
+  sprite: string;
+};
+
+export type SearchCityProperties = BaseSearchProperties & {
+  type: 'city' | 'scenery';
+};
+
+export type SearchProperties = SearchPoiProperties | SearchCityProperties;
 
 // Routing
 
